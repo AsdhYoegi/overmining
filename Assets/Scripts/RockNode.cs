@@ -23,10 +23,10 @@ public class RockNode : NetworkBehaviour
 
     private void Awake()
     {
-        // 2x2マスの中央に綺麗に収まるよう、座標を .5 にスナップさせる
+        // 2x2マスのため、Unityのグリッド線（整数座標）に中心を合わせる
         Vector3 pos = transform.position;
-        float newX = Mathf.Floor(pos.x) + 0.5f;
-        float newZ = Mathf.Floor(pos.z) + 0.5f;
+        float newX = Mathf.Round(pos.x);
+        float newZ = Mathf.Round(pos.z);
         transform.position = new Vector3(newX, pos.y, newZ);
     }
 
@@ -82,6 +82,7 @@ public class RockNode : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void MineServerRpc()
     {
+        Debug.Log($"MineServerRpc called on {gameObject.name}. CurrentHealth: {currentHealth.Value}");
         if (Time.time - lastMineTime < mineCooldown) return;
         lastMineTime = Time.time;
 
@@ -89,8 +90,12 @@ public class RockNode : NetworkBehaviour
         if (currentHealth.Value > 0)
         {
             currentHealth.Value--;
-            
+            Debug.Log($"Health reduced to {currentHealth.Value}. Spawning drop item...");
             SpawnDropItem();
+        }
+        else
+        {
+            Debug.Log("Cannot mine: health is 0.");
         }
     }
 
@@ -138,9 +143,9 @@ public class RockNode : NetworkBehaviour
         foreach (var offset in directions)
         {
             Vector3 rawTarget = transform.position + offset;
-            // グリッド（1マス単位）にスナップさせる
-            float snapX = Mathf.Round(rawTarget.x);
-            float snapZ = Mathf.Round(rawTarget.z);
+            // グリッド（1マス単位）にスナップさせる（セルの中心は0.5）
+            float snapX = Mathf.Floor(rawTarget.x) + 0.5f;
+            float snapZ = Mathf.Floor(rawTarget.z) + 0.5f;
             Vector3 targetSpot = new Vector3(snapX, rawTarget.y, snapZ);
 
             // GridManager を使って空きマス判定
@@ -154,6 +159,7 @@ public class RockNode : NetworkBehaviour
 
         if (foundSpot)
         {
+            Debug.Log($"Found empty spot at {dropTarget}. Spawning item...");
             // サーバー上でプレハブを生成（岩山の上空1mの位置からスタート）
             Vector3 startPos = transform.position + Vector3.up * 1.0f;
             GameObject item = Instantiate(dropItemPrefab, startPos, Quaternion.identity);
@@ -173,6 +179,10 @@ public class RockNode : NetworkBehaviour
                 // グリッドに登録
                 GridManager.Instance.RegisterObjectAtWorld(dropTarget, item);
             }
+        }
+        else
+        {
+            Debug.LogWarning("SpawnDropItem failed: No empty spots found around the rock!");
         }
     }
 }

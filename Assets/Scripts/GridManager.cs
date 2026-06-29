@@ -28,18 +28,18 @@ public class GridManager : NetworkBehaviour
         gridOccupancy.Clear();
     }
 
-    // ワールド座標をグリッド座標に変換 (1マス=1m)
+    // ワールド座標をグリッド座標に変換 (1マス=1m、Unityの見た目のグリッドに合わせるためFloorを使用)
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
-        int x = Mathf.RoundToInt(worldPos.x);
-        int z = Mathf.RoundToInt(worldPos.z);
+        int x = Mathf.FloorToInt(worldPos.x);
+        int z = Mathf.FloorToInt(worldPos.z);
         return new Vector2Int(x, z);
     }
 
-    // グリッド座標をワールド座標に変換 (Yは0で返すため、必要に応じて上書きする)
+    // グリッド座標をワールド座標（マスの中心）に変換
     public Vector3 GridToWorld(Vector2Int gridPos)
     {
-        return new Vector3(gridPos.x, 0, gridPos.y);
+        return new Vector3(gridPos.x + 0.5f, 0, gridPos.y + 0.5f);
     }
 
     // 特定のマスにオブジェクトを登録（サーバー専用）
@@ -99,10 +99,10 @@ public class GridManager : NetworkBehaviour
         Vector3 min = bounds.min + Vector3.one * 0.2f;
         Vector3 max = bounds.max - Vector3.one * 0.2f;
 
-        int minX = Mathf.RoundToInt(min.x);
-        int maxX = Mathf.RoundToInt(max.x);
-        int minZ = Mathf.RoundToInt(min.z);
-        int maxZ = Mathf.RoundToInt(max.z);
+        int minX = Mathf.FloorToInt(min.x);
+        int maxX = Mathf.FloorToInt(max.x);
+        int minZ = Mathf.FloorToInt(min.z);
+        int maxZ = Mathf.FloorToInt(max.z);
 
         for (int x = minX; x <= maxX; x++)
         {
@@ -135,6 +135,28 @@ public class GridManager : NetworkBehaviour
     public bool IsGridEmptyAtWorld(Vector3 worldPos)
     {
         return IsGridEmpty(WorldToGrid(worldPos));
+    }
+    
+    // 特定のマスにあるオブジェクトを取得
+    public GameObject GetObjectAtGrid(Vector2Int gridPos)
+    {
+        if (!IsServer) return null;
+        
+        if (gridOccupancy.TryGetValue(gridPos, out GameObject obj))
+        {
+            if (obj == null)
+            {
+                gridOccupancy.Remove(gridPos);
+                return null;
+            }
+            return obj;
+        }
+        return null;
+    }
+    
+    public GameObject GetObjectAtGridWorld(Vector3 worldPos)
+    {
+        return GetObjectAtGrid(WorldToGrid(worldPos));
     }
     
     // エディタ上でのデバッグ表示（使用中のマスを赤く塗る）

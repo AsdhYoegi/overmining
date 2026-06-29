@@ -7,6 +7,10 @@ public class ItemDrop : NetworkBehaviour
     public NetworkVariable<Vector3> startPos = new NetworkVariable<Vector3>();
     public NetworkVariable<Vector3> targetPos = new NetworkVariable<Vector3>();
     public NetworkVariable<float> startTime = new NetworkVariable<float>();
+    public NetworkVariable<Vector3> targetScale = new NetworkVariable<Vector3>(new Vector3(1, 1, 1));
+    
+    [Header("Item Data")]
+    public ItemData itemData;
     
     private float moveTime = 0.5f;
     private float jumpHeight = 2.0f;
@@ -31,6 +35,7 @@ public class ItemDrop : NetworkBehaviour
             // 到着
             transform.position = targetPos.Value;
             transform.rotation = Quaternion.identity;
+            transform.localScale = targetScale.Value;
             hasLanded = true;
         }
         else if (elapsedTime > 0)
@@ -43,6 +48,7 @@ public class ItemDrop : NetworkBehaviour
 
             transform.position = currentPos;
             transform.Rotate(Vector3.up * 720f * Time.deltaTime);
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale.Value, t);
         }
     }
 }

@@ -31,18 +31,24 @@ public class PlayerMining : NetworkBehaviour
 
     private void PerformMining()
     {
-        // 目の前にRayを飛ばして岩を判定する
-        RaycastHit hit;
         // ロボットの少し上から前方にRayを飛ばす
         Vector3 origin = transform.position + Vector3.up * 0.5f;
-        if (Physics.Raycast(origin, transform.forward, out hit, mineDistance))
+        Debug.Log($"PerformMining called at origin: {origin}");
+        
+        RaycastHit[] hits = Physics.RaycastAll(origin, transform.forward, mineDistance);
+        Debug.Log($"Raycast hit {hits.Length} objects.");
+        
+        foreach (var hit in hits)
         {
             RockNode rock = hit.collider.GetComponent<RockNode>();
             if (rock != null)
             {
-                // 岩山コンポーネントが見つかったら、サーバー側に採掘をリクエストする
+                Debug.Log($"Found RockNode: {rock.gameObject.name}, sending MineServerRpc.");
                 rock.MineServerRpc();
+                return;
             }
         }
+        
+        Debug.Log("No RockNode found in range.");
     }
 }

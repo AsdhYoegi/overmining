@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class GridDrawer : MonoBehaviour
 {
-    [SerializeField] private float gridSize = 1.5f;
-    [SerializeField] private int gridCount = 3; // 3x3マス
+    [SerializeField] private float gridSize = 1.0f;
+    [SerializeField] private int gridCount = 10; // 10x10マス
     [SerializeField] private float lineWidth = 0.05f;
     [SerializeField] private Color lineColor = Color.white;
     [SerializeField] private Material lineMaterial;

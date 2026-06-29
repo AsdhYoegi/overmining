@@ -19,6 +19,9 @@ public class PlayerArm : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        // 配置フェーズ中はツルハシ・アイテム持ち上げ操作を無効化
+        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase.Value == GameManager.GamePhase.Placement) return;
+
         // Eキーが押された瞬間：持っていれば足元にそっと置く（Drop）
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
@@ -105,6 +108,18 @@ public class PlayerArm : NetworkBehaviour
         return currentHeldItem != null;
     }
 
+    private bool IsValidDropTarget(Vector3 dropPos)
+    {
+        if (GridManager.Instance.IsGridEmptyAtWorld(dropPos)) return true;
+        
+        GameObject occupant = GridManager.Instance.GetObjectAtGridWorld(dropPos);
+        if (occupant != null && occupant.GetComponent<DisplayShelf>() != null)
+        {
+            return true; // 商品棚の上には置ける/投げられる！
+        }
+        return false;
+    }
+
     [ServerRpc]
     private void PlaceItemServerRpc()
     {
@@ -113,13 +128,13 @@ public class PlayerArm : NetworkBehaviour
             // プレイヤーの足元のグリッド位置を計算
             Vector3 targetPos = transform.position;
             
-            // 1マス（1.0m）単位でグリッドスナップし、Y座標は床(0)に固定
-            float snapX = Mathf.Round(targetPos.x);
-            float snapZ = Mathf.Round(targetPos.z);
+            // 1マス（1.0m）単位でグリッドスナップし、Y座標は床(0)に固定（セルの中心は0.5）
+            float snapX = Mathf.Floor(targetPos.x) + 0.5f;
+            float snapZ = Mathf.Floor(targetPos.z) + 0.5f;
             Vector3 dropPos = new Vector3(snapX, 0f, snapZ);
 
-            // GridManager で判定（置こうとしているマスが空いているか）
-            if (!GridManager.Instance.IsGridEmptyAtWorld(dropPos))
+            // GridManager で判定（置こうとしているマスが空いているか、納品箱か）
+            if (!IsValidDropTarget(dropPos))
             {
                 return; // 塞がっている場合は置けない
             }
@@ -168,15 +183,15 @@ public class PlayerArm : NetworkBehaviour
             // プレイヤーから計算した距離先のグリッド位置を計算
             Vector3 targetPos = transform.position + transform.forward * throwDistance;
             
-            // 1マス単位でグリッドスナップし、Y座標は床(0)に固定
-            float snapX = Mathf.Round(targetPos.x);
-            float snapZ = Mathf.Round(targetPos.z);
+            // 1マス単位でグリッドスナップし、Y座標は床(0)に固定（セルの中心は0.5）
+            float snapX = Mathf.Floor(targetPos.x) + 0.5f;
+            float snapZ = Mathf.Floor(targetPos.z) + 0.5f;
             Vector3 originalDropPos = new Vector3(snapX, 0f, snapZ);
             Vector3 dropPos = originalDropPos;
             bool foundSpot = false;
 
             // まず本来の投下地点をチェック
-            if (GridManager.Instance.IsGridEmptyAtWorld(originalDropPos))
+            if (IsValidDropTarget(originalDropPos))
             {
                 foundSpot = true;
             }
@@ -190,7 +205,7 @@ public class PlayerArm : NetworkBehaviour
                 foreach (var offset in offsets)
                 {
                     Vector3 checkPos = originalDropPos + offset;
-                    if (GridManager.Instance.IsGridEmptyAtWorld(checkPos))
+                    if (IsValidDropTarget(checkPos))
                     {
                         dropPos = checkPos;
                         foundSpot = true;

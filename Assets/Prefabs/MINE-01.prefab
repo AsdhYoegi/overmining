@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7984362548173483327}
   - component: {fileID: 6082673699439947208}
   - component: {fileID: 5451174807013709668}
+  - component: {fileID: 795689864449305060}
   m_Layer: 0
   m_Name: MINE-01
   m_TagString: Untagged
@@ -195,3 +196,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   reachDistance: 1.5
   holdPosition: {x: 0, y: 1.5, z: 0}
+--- !u!114 &795689864449305060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8720336223486323599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8869d88bc7e2f784b803dfda4f1d401e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  rockPrefab: {fileID: 0}
+  shelfPrefab: {fileID: 1255170925752419430, guid: bf8b1071fb3bcfd45963dffb0c620292, type: 3}
+  previewValidMat: {fileID: 0}
+  previewInvalidMat: {fileID: 0}
