@@ -12,6 +12,12 @@ public class ItemDrop : NetworkBehaviour
     private float jumpHeight = 2.0f;
     private bool hasLanded = false;
 
+    [ClientRpc]
+    public void TriggerDropClientRpc()
+    {
+        hasLanded = false;
+    }
+
     private void Update()
     {
         // 目標がセットされていない、または到着済みなら何もしない

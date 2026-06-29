@@ -15,11 +15,14 @@ public class PlayerMining : NetworkBehaviour
         // スペースキーが押された瞬間
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            // アイテムを持っている場合は採掘しない（投げるアクションが優先）
             PlayerArm arm = GetComponent<PlayerArm>();
-            if (arm != null && arm.HasItem())
+            if (arm != null)
             {
-                return;
+                // アイテムを持っている場合は「投げる」が優先されるため掘らない
+                if (arm.HasItem()) return;
+
+                // 目の前に拾えるアイテムがある場合は「拾う」が優先されるため掘らない
+                if (arm.CanGrabItem()) return;
             }
 
             PerformMining();

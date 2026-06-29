@@ -21,11 +21,31 @@ public class RockNode : NetworkBehaviour
     private Renderer rockRenderer;
     private Color originalColor;
 
+    private void Awake()
+    {
+        // 2x2マスの中央に綺麗に収まるよう、座標を .5 にスナップさせる
+        Vector3 pos = transform.position;
+        float newX = Mathf.Floor(pos.x) + 0.5f;
+        float newZ = Mathf.Floor(pos.z) + 0.5f;
+        transform.position = new Vector3(newX, pos.y, newZ);
+    }
+
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
             currentHealth.Value = maxHealth;
+            // 岩のCollider（見た目）に基づいて占有グリッドを自動登録
+            Collider col = GetComponent<Collider>();
+            if (col != null)
+            {
+                GridManager.Instance.RegisterBounds(col.bounds, gameObject);
+            }
+            else
+            {
+                Vector2Int baseGrid = GridManager.Instance.WorldToGrid(transform.position);
+                GridManager.Instance.RegisterObject(baseGrid, gameObject);
+            }
         }
 
         if (dropItemPrefab == null)
@@ -123,19 +143,8 @@ public class RockNode : NetworkBehaviour
             float snapZ = Mathf.Round(rawTarget.z);
             Vector3 targetSpot = new Vector3(snapX, rawTarget.y, snapZ);
 
-            // そのマスに既にアイテムがないかチェック
-            Collider[] colliders = Physics.OverlapSphere(targetSpot, 0.45f);
-            bool isOccupied = false;
-            foreach (var col in colliders)
-            {
-                if (col.GetComponent<ItemDrop>() != null)
-                {
-                    isOccupied = true;
-                    break;
-                }
-            }
-
-            if (!isOccupied)
+            // GridManager を使って空きマス判定
+            if (GridManager.Instance.IsGridEmptyAtWorld(targetSpot))
             {
                 dropTarget = targetSpot;
                 foundSpot = true;
@@ -160,6 +169,9 @@ public class RockNode : NetworkBehaviour
                 itemDrop.startPos.Value = startPos;
                 itemDrop.targetPos.Value = dropTarget;
                 itemDrop.startTime.Value = (float)NetworkManager.Singleton.ServerTime.Time;
+                
+                // グリッドに登録
+                GridManager.Instance.RegisterObjectAtWorld(dropTarget, item);
             }
         }
     }

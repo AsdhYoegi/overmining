@@ -3,6 +3,32 @@ using Unity.Netcode;
 
 public class DeliveryBox : NetworkBehaviour
 {
+    private void Awake()
+    {
+        // 2x2マスの中央に綺麗に収まるよう、座標を .5 にスナップさせる
+        Vector3 pos = transform.position;
+        float newX = Mathf.Floor(pos.x) + 0.5f;
+        float newZ = Mathf.Floor(pos.z) + 0.5f;
+        transform.position = new Vector3(newX, pos.y, newZ);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer)
+        {
+            Collider col = GetComponent<Collider>();
+            if (col != null)
+            {
+                GridManager.Instance.RegisterBounds(col.bounds, gameObject);
+            }
+            else
+            {
+                Vector2Int baseGrid = GridManager.Instance.WorldToGrid(transform.position);
+                GridManager.Instance.RegisterObject(baseGrid, gameObject);
+            }
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!IsServer) return; // 納品の判定はサーバーでのみ行う
